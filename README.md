@@ -1,17 +1,13 @@
-# 🖥️ Operating System Concepts – Lab & Theory (CSE 4510)
+# 🖥️ Operating System Concepts – Lab & Theory (CSE 4509 & 4510)
 
-**University:** United International University (UIU)  
-**Course Code:** CSE 4510  
-**Trimester:** Summer 2025  
+**University:** United International University (UIU)    
 
----
-
-## 📌 About
+## About
 This repository contains my **lab works, assignments, projects, and lecture notes** from the Operating System Concepts course. It combines **theory** and **hands-on programming** in Linux, focusing on how operating systems manage processes, memory, synchronization, and files.  
 
 ---
 
-## 🔹 Topics Covered
+## Topics Covered
 - **Shell Programming** → Linux commands, Bash scripting, automation  
 - **Process & Thread Management** → process states, system calls, CPU & thread scheduling (FCFS, SJF, RR, Priority)  
 - **Synchronization & IPC** → critical section, semaphores, monitors, inter-process communication  
@@ -22,7 +18,7 @@ This repository contains my **lab works, assignments, projects, and lecture note
 
 ---
 
-## 🎯 Learning Outcomes
+## Learning Outcomes
 - Automate tasks with **shell scripts**  
 - Implement **scheduling algorithms & synchronization**  
 - Apply **memory management & deadlock handling**  
@@ -31,18 +27,18 @@ This repository contains my **lab works, assignments, projects, and lecture note
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 
 ---
 
-## 📚 References
+## References
 - *Modern Operating Systems* – Andrew S. Tanenbaum  
 - *The Design of the UNIX Operating System* – Maurice J. Bach  
 
 ---
 
-## 🚀 Industry Relevance
+## Industry Relevance
 Skills gained from this course are essential for:  
 - **System Programming**  
 - **Backend & Server Development**  
