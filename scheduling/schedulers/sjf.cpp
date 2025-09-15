@@ -1,5 +1,7 @@
 #include "scheduler.h"
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 /**
  * Shortest Job First (SJF) Scheduler
@@ -43,7 +45,47 @@ public:
         //         // Run it completely
         //     }
         // }
-        
+
+        int current_time = 0;
+
+        // Sort all processes by arrival time initially
+        std::sort(processes.begin(), processes.end(), [](const Process &a, const Process &b) {
+            return a.arrivalTime < b.arrivalTime;
+        });
+
+        while (!all_processes_complete()) {
+            // get all arrived and not finished processes
+            std::vector<Process*> ready = get_ready_processes(current_time);
+
+            if (ready.empty()) {
+                // find the next process arrival time and jump there
+                int next_arrival = INT_MAX;
+                for (auto &p : processes) {
+                    if (!p.isComplete && p.arrivalTime > current_time) {
+                        next_arrival = std::min(next_arrival, p.arrivalTime);
+                    }
+                }
+                if (next_arrival != INT_MAX) {
+                    current_time = next_arrival;
+                }
+            } else {
+                // find the process with the smallest burst time
+                Process* shortest = *std::min_element(ready.begin(), ready.end(),
+                    [](Process* a, Process* b) {
+                        return a->burstTime < b->burstTime;
+                    });
+
+                run_process(shortest->pid, shortest->burstTime); // run fully
+                current_time += shortest->burstTime;
+
+                shortest->remainingTime = 0;
+                shortest->isComplete = true;
+                shortest->finishTime = current_time;
+                shortest->turnaroundTime = shortest->finishTime - shortest->arrivalTime;
+                shortest->waitingTime = shortest->turnaroundTime - shortest->burstTime;
+            }
+        }
+
         std::cout << "SJF scheduling completed.\n";
     }
 };
