@@ -13,22 +13,23 @@ double PerformanceMetrics::calculate_average_turnaround_time() const {
 
     double sum = 0.0;
     for (const auto& p : processes) {
-        // Prefer stored turnaround_time if available (non-negative)
+        // Prefer stored turnaround_time if available
         if (p.turnaround_time >= 0) {
             sum += static_cast<double>(p.turnaround_time);
-        } else if (p.completion_time >= 0 && p.arrival_time >= 0) {
+        } 
+        // Otherwise, calculate: completion - arrival
+        else if (p.completion_time >= 0 && p.arrival_time >= 0) {
             sum += static_cast<double>(p.completion_time - p.arrival_time);
-        } else {
-            // fallback: attempt to compute using start + burst if possible
-            if (p.start_time >= 0 && p.burst_time >= 0) {
-                sum += static_cast<double>((p.start_time + p.burst_time) - p.arrival_time);
-            } else {
-                // if impossible, treat as zero to avoid NaNs but still count process
-                sum += 0.0;
-            }
+        } 
+        // Fallback: (start+burst) - arrival
+        else if (p.start_time >= 0 && p.burst_time >= 0) {
+            sum += static_cast<double>((p.start_time + p.burst_time) - p.arrival_time);
+        } 
+        else {
+            sum += 0.0; // fallback to 0 if data invalid
         }
     }
-    return sum / static_cast<double>(processes.size());
+    return sum / static_cast<double>(processes.size());  // average = sum / n
 }
 
 double PerformanceMetrics::calculate_average_waiting_time() const {
@@ -36,22 +37,21 @@ double PerformanceMetrics::calculate_average_waiting_time() const {
 
     double sum = 0.0;
     for (const auto& p : processes) {
-        // Prefer stored waiting_time if available (non-negative)
         if (p.waiting_time >= 0) {
             sum += static_cast<double>(p.waiting_time);
         } else {
             // waiting = turnaround - burst
             int turnaround = -1;
             if (p.turnaround_time >= 0) turnaround = p.turnaround_time;
-            else if (p.completion_time >= 0 && p.arrival_time >= 0) turnaround = p.completion_time - p.arrival_time;
-            else if (p.start_time >= 0 && p.burst_time >= 0) turnaround = (p.start_time + p.burst_time) - p.arrival_time;
+            else if (p.completion_time >= 0 && p.arrival_time >= 0)
+                turnaround = p.completion_time - p.arrival_time;
+            else if (p.start_time >= 0 && p.burst_time >= 0)
+                turnaround = (p.start_time + p.burst_time) - p.arrival_time;
 
-            if (turnaround >= 0 && p.burst_time >= 0) {
+            if (turnaround >= 0 && p.burst_time >= 0)
                 sum += static_cast<double>(turnaround - p.burst_time);
-            } else {
-                // fallback to zero if unknown
-                sum += 0.0;
-            }
+            else
+                sum += 0.0;  // fallback to zero
         }
     }
     return sum / static_cast<double>(processes.size());
@@ -62,13 +62,14 @@ double PerformanceMetrics::calculate_average_response_time() const {
 
     double sum = 0.0;
     for (const auto& p : processes) {
-        // Prefer stored response_time if available (non-negative)
         if (p.response_time >= 0) {
             sum += static_cast<double>(p.response_time);
-        } else if (p.start_time >= 0 && p.arrival_time >= 0) {
+        } 
+        // response = start - arrival
+        else if (p.start_time >= 0 && p.arrival_time >= 0) {
             sum += static_cast<double>(p.start_time - p.arrival_time);
-        } else {
-            // fallback to zero
+        } 
+        else {
             sum += 0.0;
         }
     }
@@ -76,8 +77,18 @@ double PerformanceMetrics::calculate_average_response_time() const {
 }
 
 double PerformanceMetrics::calculate_cpu_utilization() const {
-    // Use gantt helper which returns percentage (as existing code did)
-    return gantt.get_cpu_utilization();
+    // TODO: Implement CPU utilization calculation
+    //
+    // CPU Utilization = (Total CPU busy time / Total time) * 100
+    //
+    // You can use gantt.get_cpu_utilization() or calculate manually:
+    // - Total time = gantt.get_total_time()
+    // - Idle time = gantt.get_total_idle_time()
+    // - Busy time = Total time - Idle time
+    //
+    // Hint: The GanttChart class already has this functionality
+
+    return gantt.get_cpu_utilization();  // This is already implemented
 }
 
 double PerformanceMetrics::calculate_throughput() const {
@@ -86,14 +97,18 @@ double PerformanceMetrics::calculate_throughput() const {
     // Throughput = number_of_processes / total_time
     double total_time = static_cast<double>(gantt.get_total_time());
     if (total_time <= 0.0) {
-        // If total_time is zero (all processes instantaneous), return count
-        return static_cast<double>(processes.size());
+        return static_cast<double>(processes.size()); // avoid division by 0
     }
     return static_cast<double>(processes.size()) / total_time;
 }
 
 double PerformanceMetrics::calculate_fairness_index() const {
-    // Fairness = (sum w_i)^2 / (n * sum w_i^2), using waiting times
+    // One simple fairness measure:
+    // Fairness = (sum of waiting times)^2 / (n * sum of (waiting times)^2)
+    // where n is number of processes
+    // 
+    // Result closer to 1.0 means more fair scheduling
+
     int n = static_cast<int>(processes.size());
     if (n == 0) return 1.0;
 
@@ -104,33 +119,37 @@ double PerformanceMetrics::calculate_fairness_index() const {
         double w = 0.0;
         if (p.waiting_time >= 0) w = static_cast<double>(p.waiting_time);
         else {
-            // compute waiting if possible
             int turnaround = -1;
             if (p.turnaround_time >= 0) turnaround = p.turnaround_time;
-            else if (p.completion_time >= 0 && p.arrival_time >= 0) turnaround = p.completion_time - p.arrival_time;
-            if (turnaround >= 0 && p.burst_time >= 0) w = static_cast<double>(turnaround - p.burst_time);
-            else w = 0.0;
+            else if (p.completion_time >= 0 && p.arrival_time >= 0)
+                turnaround = p.completion_time - p.arrival_time;
+
+            if (turnaround >= 0 && p.burst_time >= 0)
+                w = static_cast<double>(turnaround - p.burst_time);
+            else
+                w = 0.0;
         }
         waits.push_back(w);
     }
 
-    double sum_w = std::accumulate(waits.begin(), waits.end(), 0.0);
+    double sum_w = std::accumulate(waits.begin(), waits.end(), 0.0); // Σwi
     double sum_w2 = 0.0;
-    for (double v : waits) sum_w2 += v * v;
+    for (double v : waits) sum_w2 += v * v;  // Σwi²
 
-    if (sum_w2 <= 0.0) {
-        // all zeros -> perfectly fair
-        return 1.0;
-    }
+    if (sum_w2 <= 0.0) return 1.0; // all zero wait -> perfectly fair
 
     double fairness = (sum_w * sum_w) / (static_cast<double>(n) * sum_w2);
-    // numerical safety clamp to [0,1]
-    if (fairness < 0.0) fairness = 0.0;
+    if (fairness < 0.0) fairness = 0.0; // clamp
     if (fairness > 1.0) fairness = 1.0;
     return fairness;
 }
 
 int PerformanceMetrics::calculate_context_switches() const {
+    // BONUS: Count number of times CPU switches between different processes
+    // 
+    // Look at gantt chart entries and count transitions between different PIDs
+    // Don't count idle time as a context switch
+    
     const auto& entries = gantt.get_entries();
     if (entries.size() <= 1) return 0;
 
@@ -138,7 +157,7 @@ int PerformanceMetrics::calculate_context_switches() const {
     for (size_t i = 1; i < entries.size(); i++) {
         if (!entries[i-1].is_idle() && !entries[i].is_idle() &&
             entries[i-1].pid != entries[i].pid) {
-            switches++;
+            switches++;  // count when PID changes
         }
     }
     return switches;
@@ -148,7 +167,7 @@ void PerformanceMetrics::print_summary() const {
     if (!is_valid_metrics()) {
         std::cout << "Warning: Some processes have invalid timing data!\n";
     }
-
+    
     std::cout << "\n=== Performance Metrics Summary ===\n";
     std::cout << std::fixed << std::setprecision(2);
     std::cout << "Average Turnaround Time: " << calculate_average_turnaround_time() << " time units\n";
@@ -164,7 +183,7 @@ void PerformanceMetrics::print_summary() const {
 void PerformanceMetrics::print_detailed() const {
     print_summary();
     print_process_metrics();
-
+    
     std::cout << "=== Gantt Chart Analysis ===\n";
     std::cout << "Total Time:      " << gantt.get_total_time() << " time units\n";
     std::cout << "Total Idle Time: " << gantt.get_total_idle_time() << " time units\n";
@@ -176,7 +195,7 @@ void PerformanceMetrics::print_process_metrics() const {
     std::cout << "=== Individual Process Metrics ===\n";
     std::cout << "PID\tArrival\tBurst\tStart\tFinish\tTurnaround\tWaiting\tResponse\n";
     std::cout << "---\t-------\t-----\t-----\t------\t----------\t-------\t--------\n";
-
+    
     for (const auto& process : processes) {
         std::cout << process.pid << "\t"
                   << process.arrival_time << "\t"
