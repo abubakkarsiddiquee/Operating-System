@@ -1,0 +1,8 @@
+# Edge case: All processes arrive at the same time
+# Good for testing tie-breaking rules in algorithms like SJF
+
+1 0 8
+2 0 4
+3 0 2  
+4 0 6
+5 0 1

@@ -1,0 +1,11 @@
+# Mixed workload for comprehensive testing
+# Various arrival times and burst times
+# Good for testing edge cases and general algorithm behavior
+
+1 0 7 2
+2 2 4 1  
+3 4 1 3
+4 5 3 1
+5 8 2 2
+6 10 5 0
+7 12 2 1

@@ -1,0 +1,9 @@
+# Interactive workload - good for Round Robin testing
+# These processes have shorter burst times, simulating interactive tasks
+# Format: PID Arrival_Time Burst_Time Priority Name
+
+1 0 4 0 WebBrowser
+2 1 2 0 TextEditor  
+3 2 6 0 Compiler
+4 3 3 0 Calculator
+5 4 1 0 NotePad

@@ -1,0 +1,10 @@
+# Priority-based test case  
+# Lower priority number = higher priority
+# Good for testing priority-based algorithms
+# Format: PID Arrival_Time Burst_Time Priority Name
+
+1 0 10 3 LowPriorityTask
+2 1 4 1 HighPriorityTask  
+3 2 6 2 MediumPriorityTask
+4 3 2 1 AnotherHighPriority
+5 5 3 2 MediumTask2
