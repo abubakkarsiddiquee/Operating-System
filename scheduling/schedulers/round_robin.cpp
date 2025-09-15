@@ -49,7 +49,58 @@ public:
         //     else:
         //         // Pop process from front of queue, run it, and requeue if needed
         // }
-        
+
+        std::queue<Process*> ready_queue;
+        int current_time = 0;
+
+        // Sort by arrival time to track when they come
+        std::sort(processes.begin(), processes.end(), [](const Process &a, const Process &b) {
+            return a.arrivalTime < b.arrivalTime;
+        });
+
+        size_t index = 0; // to track which process will arrive next
+
+        while (!all_processes_complete()) {
+
+            // Add newly arrived processes to ready queue
+            while (index < processes.size() && processes[index].arrivalTime <= current_time) {
+                ready_queue.push(&processes[index]);
+                index++;
+            }
+
+            if (ready_queue.empty()) {
+                // no process is ready → jump to next arrival
+                if (index < processes.size()) {
+                    current_time = processes[index].arrivalTime;
+                    continue;
+                }
+            } else {
+                Process* p = ready_queue.front();
+                ready_queue.pop();
+
+                int run_time = std::min(time_quantum, p->remainingTime);
+
+                run_process(p->pid, run_time); // provided helper
+                current_time += run_time;
+                p->remainingTime -= run_time;
+
+                // add new arrivals that came during this run
+                while (index < processes.size() && processes[index].arrivalTime <= current_time) {
+                    ready_queue.push(&processes[index]);
+                    index++;
+                }
+
+                // if process still not finished → put it back
+                if (p->remainingTime > 0) {
+                    ready_queue.push(p);
+                } else {
+                    p->finishTime = current_time;
+                    p->turnaroundTime = p->finishTime - p->arrivalTime;
+                    p->waitingTime = p->turnaroundTime - p->burstTime;
+                }
+            }
+        }
+
         std::cout << "Round Robin scheduling completed.\n";
     }
     
